@@ -1,3 +1,4 @@
+import os
 from fastapi import FastAPI, HTTPException, Depends
 from pydantic import BaseModel
 from sqlalchemy import create_engine, Column, Integer, String, Boolean, DateTime
@@ -7,7 +8,13 @@ from datetime import datetime
 from fastapi.middleware.cors import CORSMiddleware
 
 # --- Database Setup ---
-DATABASE_URL = "postgresql://qms_user:securepassword@postgres_db/qms_db"
+# FIXED LINE BELOW: Checks for Cloud Database first
+DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://qms_user:securepassword@postgres_db/qms_db")
+
+# Handle the specific case where Render gives a "postgres://" URL but SQLAlchemy needs "postgresql://"
+if DATABASE_URL and DATABASE_URL.startswith("postgres://"):
+    DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://", 1)
+
 engine = create_engine(DATABASE_URL)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
