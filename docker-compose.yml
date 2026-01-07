@@ -1,0 +1,59 @@
+version: '3.8'
+
+services:
+  # 1. Primary Database (Relational Data)
+  postgres_db:
+    image: postgres:15
+    container_name: qms_postgres
+    environment:
+      POSTGRES_USER: qms_user
+      POSTGRES_PASSWORD: securepassword
+      POSTGRES_DB: qms_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  # 2. Secondary Database (Logs/Analytics)
+  mongo_db:
+    image: mongo:6
+    container_name: qms_mongo
+    ports:
+      # CHANGED: Using 27018 externally to avoid conflict with your local Mongo
+      - "27018:27017"
+    volumes:
+      - mongo_data:/data/db
+
+  # 3. Backend API
+  backend:
+    build: ./backend
+    container_name: qms_backend
+    # RELOAD ENABLED: Code changes will update instantly
+    command: uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+    volumes:
+      - ./backend:/app
+    ports:
+      - "8000:8000"
+    environment:
+      DATABASE_URL: postgresql://qms_user:securepassword@postgres_db/qms_db
+      # INTERNAL NETWORK: Backend still talks to Mongo on 27017 (internal)
+      MONGO_URL: mongodb://mongo_db:27017
+    depends_on:
+      - postgres_db
+      - mongo_db
+
+  # 4. Frontend (React)
+  frontend:
+    build: ./frontend
+    container_name: qms_frontend
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    ports:
+      - "3000:5173"
+    depends_on:
+      - backend
+
+volumes:
+  postgres_data:
+  mongo_data:
