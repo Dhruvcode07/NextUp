@@ -1,4 +1,4 @@
-# 🏥 QueueFlow - Smart Queue Management System
+# 🏥 NextUp - Smart Queue Management System
 
 **Live Demo:** [Click Here to View App](https://nextup-frontend-qmkn.onrender.com)
 
